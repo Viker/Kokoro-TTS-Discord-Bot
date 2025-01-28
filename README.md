@@ -66,7 +66,7 @@ settings_file: "settings.yaml"
 
 5. Download the required model files to the working directory:
 ```bash
-# Download either voices.json or voices.bin (bin is preferred)
+# Download voices.bin 
 wget https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files/voices.bin
 
 # Download the model
@@ -159,18 +159,6 @@ kokoro_bot/
 pip install -r requirements-dev.txt
 ```
 
-### Running Tests
-
-```bash
-pytest tests/
-```
-
-### Code Style
-
-The project follows PEP 8 guidelines. Use flake8 for linting:
-```bash
-flake8 kokoro_bot
-```
 
 ## Contributing
 
