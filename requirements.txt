@@ -1,0 +1,7 @@
+discord.py>=2.0.0
+pyyaml>=6.0
+numpy>=1.21.0
+soundfile>=0.10.3
+kokoro_onnx  # Version as needed
+pytest>=7.0.0  # For testing
+PyNaCl

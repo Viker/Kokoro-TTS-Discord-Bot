@@ -1,0 +1,12 @@
+discord_token: "YOUR_DISCORD_TOKEN_HERE"
+command_prefix: "#"
+model_path: "kokoro-v0_19.onnx"
+voices_path: "voices.bin"
+max_cache_size: 1000
+max_queue_size: 100
+message_ttl: 300
+log_level: "INFO"
+log_file: "bot.log"
+settings_file: "settings.yaml"
+circuit_breaker_threshold: 5
+circuit_breaker_recovery: 300
