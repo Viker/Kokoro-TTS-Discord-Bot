@@ -30,8 +30,8 @@ A Discord bot for high-quality text-to-speech conversion using the Kokoro TTS en
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
-cd kokoro-bot
+git clone https://github.com/Viker/Kokoro-TTS-Discord-Bot.git
+cd Kokoro-TTS-Discord-Bot
 ```
 
 2. Create and activate a virtual environment:
@@ -64,9 +64,13 @@ log_file: "bot.log"
 settings_file: "settings.yaml"
 ```
 
-5. Place the model files in the working directory:
-   - `kokoro-v0_19.onnx`
-   - `voices.bin`
+5. Download the required model files to the working directory:
+```bash
+# Download either voices.json or voices.bin (bin is preferred)
+wget https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files/voices.bin
+
+# Download the model
+wget https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files/kokoro-v0_19.onnx
 
 ## Usage
 
