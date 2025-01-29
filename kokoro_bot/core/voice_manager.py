@@ -1,3 +1,15 @@
+"""
+Voice connection management system for the Kokoro TTS Bot.
+Handles voice connections, health monitoring, and cleanup.
+"""
+
+import asyncio
+import logging
+from typing import Dict, Optional
+from datetime import datetime
+import discord
+from ..utils.result import Result
+
 class VoiceConnectionManager:
     """
     Manages voice connections with health monitoring and connection lifecycle.
@@ -12,6 +24,10 @@ class VoiceConnectionManager:
         
         # Start background health monitoring
         self._start_health_monitor()
+
+    def _start_health_monitor(self) -> None:
+        """Start the background health monitoring task."""
+        asyncio.create_task(self._monitor_connections())
 
     async def _monitor_connections(self) -> None:
         """
@@ -138,3 +154,122 @@ class VoiceConnectionManager:
         except Exception as e:
             self.logger.error(f"Error in get_connection: {str(e)}")
             return Result.err(str(e))
+
+    def _get_lock(self, guild_id: int) -> asyncio.Lock:
+        """
+        Get or create a lock for a guild.
+        
+        Args:
+            guild_id: The ID of the guild
+            
+        Returns:
+            An asyncio Lock for the guild
+        """
+        if guild_id not in self.locks:
+            self.locks[guild_id] = asyncio.Lock()
+        return self.locks[guild_id]
+
+    def get_voice_client(self, guild_id: int) -> Optional[discord.VoiceClient]:
+        """
+        Get the voice client for a guild if it exists.
+        
+        Args:
+            guild_id: The ID of the guild
+            
+        Returns:
+            The voice client if it exists, None otherwise
+        """
+        return self.connections.get(guild_id)
+
+    def is_connected(self, guild_id: int) -> bool:
+        """
+        Check if connected to a voice channel in a guild.
+        
+        Args:
+            guild_id: The ID of the guild
+            
+        Returns:
+            True if connected, False otherwise
+        """
+        client = self.get_voice_client(guild_id)
+        return client is not None and client.is_connected()
+
+    async def pause(self, guild_id: int) -> Result:
+        """
+        Pause audio playback in a guild.
+        
+        Args:
+            guild_id: The ID of the guild
+            
+        Returns:
+            Result indicating success or failure
+        """
+        try:
+            client = self.get_voice_client(guild_id)
+            if client and client.is_playing():
+                client.pause()
+                return Result.ok(True)
+            return Result.err("No audio playing")
+        except Exception as e:
+            return Result.err(str(e))
+
+    async def resume(self, guild_id: int) -> Result:
+        """
+        Resume audio playback in a guild.
+        
+        Args:
+            guild_id: The ID of the guild
+            
+        Returns:
+            Result indicating success or failure
+        """
+        try:
+            client = self.get_voice_client(guild_id)
+            if client and client.is_paused():
+                client.resume()
+                return Result.ok(True)
+            return Result.err("No audio paused")
+        except Exception as e:
+            return Result.err(str(e))
+
+    async def stop(self, guild_id: int) -> Result:
+        """
+        Stop audio playback in a guild.
+        
+        Args:
+            guild_id: The ID of the guild
+            
+        Returns:
+            Result indicating success or failure
+        """
+        try:
+            client = self.get_voice_client(guild_id)
+            if client and (client.is_playing() or client.is_paused()):
+                client.stop()
+                return Result.ok(True)
+            return Result.err("No audio playing")
+        except Exception as e:
+            return Result.err(str(e))
+
+    def get_connection_status(self, guild_id: int) -> Dict:
+        """
+        Get detailed status of a voice connection.
+        
+        Args:
+            guild_id: The ID of the guild
+            
+        Returns:
+            Dictionary containing connection status information
+        """
+        client = self.get_voice_client(guild_id)
+        if not client:
+            return {'connected': False}
+            
+        return {
+            'connected': client.is_connected(),
+            'playing': client.is_playing(),
+            'paused': client.is_paused(),
+            'channel_id': client.channel.id if client.channel else None,
+            'latency': getattr(client, 'latency', None),
+            'last_health_check': self.health_checks.get(guild_id)
+        }
