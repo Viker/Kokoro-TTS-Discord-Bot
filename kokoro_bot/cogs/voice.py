@@ -188,6 +188,86 @@ class VoiceCog(commands.Cog):
             embed = self._create_embed(str(e), color=discord.Color.red())
             await ctx.send(embed=embed)
 
+
+    @commands.command(name='language', aliases=['lang'])
+    @commands.cooldown(1, 2, commands.BucketType.user)
+    async def change_language(self, ctx: commands.Context, lang: str = None):
+        """Change TTS language with validation.
+        
+        Args:
+            ctx: Command context
+            lang: Language code (e.g., 'en', 'ja', 'fr')
+        """
+        start_time = time.time()
+        
+        try:
+            # Get available languages from TTS engine
+            available_languages = self.bot.tts_engine.get_available_languages()
+            
+            # Show current language if no parameter provided
+            if lang is None:
+                current_settings = self.bot.settings_manager.get_user_settings(
+                    ctx.guild.id,
+                    ctx.author.id
+                )
+                
+                embed = self._create_embed(
+                    "Available Languages and Current Setting",
+                    color=discord.Color.blue()
+                )
+                embed.add_field(
+                    name="Current Language",
+                    value=f"{current_settings['lang']} ({available_languages.get(current_settings['lang'], 'Unknown')})",
+                    inline=False
+                )
+                
+                # Format available languages
+                lang_list = [f"• {code}: {name}" for code, name in available_languages.items()]
+                chunks = [lang_list[i:i + 10] for i in range(0, len(lang_list), 10)]
+                
+                for i, chunk in enumerate(chunks, 1):
+                    embed.add_field(
+                        name=f"Available Languages (Page {i})",
+                        value="\n".join(chunk),
+                        inline=True
+                    )
+                
+                await ctx.send(embed=embed)
+                return
+            
+            # Validate language code
+            if lang not in available_languages:
+                raise commands.CommandError(
+                    f"Invalid language code! Use `{ctx.prefix}language` to see available languages."
+                )
+            
+            # Update setting
+            result = self.bot.settings_manager.set_user_setting(
+                ctx.guild.id,
+                ctx.author.id,
+                'lang',
+                lang
+            )
+            
+            if not result.success:
+                raise commands.CommandError(result.error)
+                
+            embed = self._create_embed(
+                f"TTS language changed to {lang} ({available_languages[lang]})",
+                color=discord.Color.green()
+            )
+            await ctx.send(embed=embed)
+            
+            # Update metrics
+            self.bot.metrics.track_command('language', time.time() - start_time)
+            
+        except Exception as e:
+            await self.bot.error_handler.handle_command_error(e, ctx, 'language')
+            embed = self._create_embed(str(e), color=discord.Color.red())
+            await ctx.send(embed=embed)
+
+
+
     @commands.command(name='speed')
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def change_speed(self, ctx: commands.Context, speed: float = None):

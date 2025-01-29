@@ -178,3 +178,28 @@ class TTSEngine:
             'failures': self.circuit_breaker['failures'],
             'cache_stats': self.cache.get_metrics()
         }
+
+    def get_available_languages(self) -> Dict[str, str]:
+                """Get list of available languages with their names.
+                
+                Returns:
+                    Dictionary mapping language codes to their names
+                """
+                try:
+                    # Get languages from Kokoro
+                    available_langs = self.kokoro.get_languages()
+                    
+                    # Convert to dictionary with readable names
+                    lang_dict = {}
+                    for lang in available_langs:
+                        # Some engines return just the code, others might return a tuple of (code, name)
+                        if isinstance(lang, tuple):
+                            lang_dict[lang[0]] = lang[1]
+                        else:
+                            lang_dict[lang] = lang  # Use code as name if no name provided
+                            
+                    return lang_dict
+                    
+                except Exception as e:
+                    self.logger.error(f"Failed to get languages: {str(e)}")
+                    return {}
